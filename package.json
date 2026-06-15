@@ -1,0 +1,19 @@
+{
+  "name": "Portfolio",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": " rsbuild",
+    "preview": "rsbuild preview",
+    "build-web": "rsbuild build",
+    "build-bin": "cmd /c .\\src\\game\\build.bat && xcopy .\\src\\game\\build\\*.js .\\public\\ /E /Y >> NUL && xcopy .\\src\\game\\build\\*.wasm .\\public\\ /E /Y >> NUL",
+    "build-all": "rsbuild build --log-level silent && pnpm build-bin"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^2.0.11"
+  },
+  "pnpm": {
+    "silent": true
+  }
+}
