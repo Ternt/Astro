@@ -15,7 +15,7 @@ set auto_compile_flags=
 if "%tracy%"=="1" set auto_compile_flags=%auto_compile_flags% -DPROFILE_TRACY=1
 
 :: --- Compile/Link Line Definitions ------------------------------------------
-if "%msvc%"=="1"   set cl_common=     /nologo /I../astro /I../includes %auto_compile_flags%
+if "%msvc%"=="1"   set cl_common=     /nologo /I../src/astro/ /I../src/third_party/ %auto_compile_flags%
 if "%msvc%"=="1"   set cl_debug=      call cl %cl_common% /Z7 /Od /DBUILD_DEBUG=1
 if "%msvc%"=="1"   set cl_release=    call cl %cl_common% /Z7 /O2 /DBUILD_DEBUG=0
 if "%msvc%"=="1"   set cl_link=       /link /MANIFEST:EMBED /INCREMENTAL:NO /NODEFAULTLIB:libcmt /NODEFAULTLIB:msvcrtd /LIBPATH:../libs 
@@ -59,7 +59,7 @@ if not exist build mkdir build
 :: --- Build -----------------------------------------------------------------
 pushd build
 if "1"=="1" (
-  %compile% ../test/test_custom_renderer.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
+  %compile% ../src/test/test_custom_renderer.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
   REM call emcc ../test/test_custom_renderer.c -o astro.js -g -Wall -I../astro -I../includes -L../libs -lraylib.web -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -w -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES3 -s USE_GLFW=3 -s ALLOW_MEMORY_GROWTH=1 -s ASSERTIONS=1 -std=c99 --preload-file ../astro/fonts
 )
 popd build
