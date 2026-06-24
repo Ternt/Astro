@@ -1,12 +1,13 @@
 // 2026-06-14
 
-#define DEFAULT_FONT_PATH "astro/fonts/jetbrains-mono.ttf"
+#define DEFAULT_FONT_PATH "assets/jetbrains-mono.ttf"
+#define CAMERA_MOVE_MULT 0.25
 
 //
 // helpers
 //
 
-static void Game_HandleZoomAndDrag(void)
+static void Game_HandleCameraControls(void)
 {
   // Handle click dragging
   if(IsMouseButtonDown(MOUSE_RIGHT_BUTTON))
@@ -102,8 +103,11 @@ int main(int argc, char *argv[])
   GAME.camera_2d.zoom     = GAME.camera_zoom;
   GAME.camera_2d.rotation = 0.0f;
 
+  // debug context
+  DebugCtx_Init();
+
   // game entry point
-  GAME.arena = ArenaAlloc(ARENA_DEFAULT_CAP);
+  GAME.arena = ArenaAlloc("game_core", MB(4));
   {
     R_Init();
     Game_EntryPoint(argc, argv);

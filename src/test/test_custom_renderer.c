@@ -1,4 +1,5 @@
 // 2026-06-17
+//
 // TODO list (features, improvements, and bug fixes)
 // -------------------------------------------------
 // [ ] Resize window when resizing occurs in the 
@@ -22,9 +23,9 @@
 //- Game Configurations
 
 // profiling macros
-#if !defined(PLATFORM_WEB)
-#define PROFILE_TRACY 1
-#endif
+// #if !defined(PLATFORM_WEB)
+// #define PROFILE_TRACY 1
+// #endif
 
 // opengl version
 #if defined(PLATFORM_WEB)
@@ -45,21 +46,33 @@
 #include "arena.h"
 #include "render.h"
 #include "geometry.h"
+#include "draw.h"
+#include "entity.h"
 #include "game.h"
 
 #include "helpers.c"
 #include "arena.c"
 #include "render.c"
 #include "geometry.c"
+#include "draw.c"
+#include "entity.c"
 #include "game.c"
 
 ////////////////////////////
 //- Game Globals
 
-GLuint      g_hexBuffer = 0;
-NGon        g_hexShape = zero_struct;
-Transform*  g_hexTransforms = null;
-u32         g_hexInstCount = 32;
+GLuint      g_astroid_hexBuffer = 0;
+NGon        g_astroid_hexShape = zero_struct;
+Xform*      g_astroid_hexXforms = null;
+u32         g_astroid_hexInstCount = 32;
+R_Hull2DInst *g_astroid_hexInst = null;
+
+GLuint      g_playerBuffer = 0;
+NGon        g_playerShape = zero_struct;
+Xform*      g_playerXform = null;
+f32         g_playerMoveSpeed = 1.0f/75.0f;
+f32         g_playerTurnSpeed = 1.0f/15.0f;
+R_Hull2DInst *g_playerInst = null;
 
 f32         g_worldBoundX = 200.0f;
 f32         g_worldBoundY = 200.0f;
@@ -80,7 +93,65 @@ static inline void
 Game_UpdateState(void)
 {
   ProfBegin("Game_UpdateState");
-  Game_HandleZoomAndDrag();
+
+  // Get current transforms
+  Xform xform = *g_playerXform;
+  Vector2 tr = xform.tr;
+  f32     rt = xform.rt;
+  Vector2 sc = xform.sc;
+
+  Direction dir = Direction_Null;
+  f32 angle = rt;
+  if(IsKeyDown(KEY_W))
+  {
+    dir = Direction_North;
+  }
+  if(IsKeyDown(KEY_S))
+  {
+    dir = Direction_South;
+  }
+  if(IsKeyDown(KEY_E))
+  {
+    angle += g_playerTurnSpeed*DEG2RAD;
+  }
+  if(IsKeyDown(KEY_Q))
+  {
+    angle -= g_playerTurnSpeed*DEG2RAD;
+  }
+
+  // Calculate orientation vector
+  Vector2 axis = {0.0, 1.0};
+  Vector2 orientation = Vector2Rotate(axis, angle);
+  Vector2 disp = Vector2Zero();
+  switch(dir)
+  {
+    default:break;
+    case Direction_North:{disp = Vector2Scale(Vector2Normalize(orientation),  1.0f);}break;
+    case Direction_South:{disp = Vector2Scale(Vector2Normalize(orientation), -1.0f);}break;
+  }
+  disp = Vector2Scale(disp, g_playerMoveSpeed);
+  disp = Vector2Add(tr, disp);
+
+  // Update player transformation state
+  g_playerXform->tr = disp;
+  g_playerXform->rt = angle;
+
+  // Get updated transforms
+  tr = xform.tr;
+  rt = xform.rt;
+  sc = xform.sc;
+
+  // Update instance state
+  Matrix model = MatrixIdentity();
+  model = MatrixMultiply(model, MatrixScale(sc.x, sc.y, 1.0f));
+  model = MatrixMultiply(model, MatrixRotate((Vector3){0.0f, 0.0f, 1.0f}, rt));
+  model = MatrixMultiply(model, MatrixTranslate(tr.x, tr.y, 0.0f));
+  g_playerInst->model = MatrixTranspose(model);
+
+  // Update camera state
+  GAME.camera_2d.target = tr;
+
+  Game_HandleCameraControls();
   {
     ProfBegin("Update Tree");
     ProfEnd();
@@ -122,14 +193,27 @@ Game_DrawDebug(void)
   if (InRange(fps,  0, 14)) fpsColor = RED;
   DrawTextEx(GAME.default_font, TextFormat("%2i FPS", fps), (Vector2){0, 0}, 20, 1, fpsColor);
   DrawTextEx(GAME.default_font, TextFormat("zoom %.3f\n", GAME.camera_zoom), (Vector2){0, 20}, 20, 1, WHITE);
-  DrawTextEx(GAME.default_font, TextFormat("count %d\n", g_hexInstCount), (Vector2){0, 40}, 20, 1, WHITE);
+  DrawTextEx(GAME.default_font, TextFormat("count %d\n", g_astroid_hexInstCount), (Vector2){0, 40}, 20, 1, WHITE);
 
+  // World-space debug
   BeginMode2D(GAME.camera_2d);
-  DrawRectangleLines(-g_worldBoundX/2.0f, 
-                     -g_worldBoundY/2.0f,
-                      g_worldBoundX, 
-                      g_worldBoundY, 
-                      LIME);
+    DR_DrawRectangleLines(-g_worldBoundX/2.0f, 
+                          -g_worldBoundY/2.0f,
+                           g_worldBoundX, 
+                           g_worldBoundY, 
+                           LIME);
+
+    // Get current transforms
+    Xform xform = *g_playerXform;
+    Vector2 tr = xform.tr;
+    f32     rt = xform.rt;
+    Vector2 sc = xform.sc;
+
+    // Draw Line
+    Vector2 start_pos = {tr.x, tr.y};
+    Vector2 axis = {0.0, 1.0};
+    Vector2 dir = Vector2Rotate(axis, rt);
+    DR_DrawLine2D(start_pos, dir, 1.5f, RED);
   EndMode2D();
 
   ProfEnd();
@@ -140,18 +224,24 @@ Game_DrawDebug(void)
 
 static void Game_EntryPoint(int argc, char *argv[])
 {
-  g_hexShape = Geo_GenerateNGonConvex(GAME.arena, 6);
+  // initialize player spaceship
+  g_playerShape = Geo_GenerateNGonConvex(GAME.arena, 3);
+  g_playerXform = PushArray(GAME.arena, Xform, 1);
+  g_playerXform->tr = Vector2Zero();
+  g_playerXform->rt = 0.0f;
+  g_playerXform->sc = Vector2One();
 
-  // initialize per-instance randomized transforms for hexagons
-  g_hexTransforms = PushArray(GAME.arena, Transform, g_hexInstCount);
-  for(u32 i = 0; i < g_hexInstCount; i += 1)
+  // initialize per-instance randomized transforms for astroids
+  g_astroid_hexShape = Geo_GenerateNGonConvex(GAME.arena, 8);
+  g_astroid_hexXforms = PushArray(GAME.arena, Xform, g_astroid_hexInstCount);
+  for(u32 i = 0; i < g_astroid_hexInstCount; i += 1)
   {
-    f32 randScale = rand_f32(1.0f, 2.5f);
-    g_hexTransforms[i].scale = (Vector3){randScale, randScale, 1.0f};
+    f32 randScale = RandF32(1.0f, 2.5f);
+    g_astroid_hexXforms[i].sc = (Vector2){randScale, randScale};
 
-    f32 randPosX = rand_f32(-0.5*g_worldBoundX, 0.5*g_worldBoundX);
-    f32 randPosY = rand_f32(-0.5*g_worldBoundY, 0.5*g_worldBoundY);
-    g_hexTransforms[i].translation = (Vector3){randPosX, randPosY, 0.0f};
+    f32 randPosX = RandF32(-0.5*g_worldBoundX, 0.5*g_worldBoundX);
+    f32 randPosY = RandF32(-0.5*g_worldBoundY, 0.5*g_worldBoundY);
+    g_astroid_hexXforms[i].tr = (Vector2){randPosX, randPosY};
   }
 
   // build rendering pipeline
@@ -179,26 +269,55 @@ static void Game_EntryPoint(int argc, char *argv[])
         batch_groups->node_count += 1;
 
         // Allocate static mesh vertices buffer.
-        u32 size = g_hexShape.count * sizeof(Vector2);
-        g_hexBuffer = R_AllocStaticBuffer(g_hexBuffer, size, g_hexShape.data);
-        node->params.mesh_vertices = g_hexBuffer;
-        node->params.vert_count = g_hexShape.count;
-
+        u32 size = g_astroid_hexShape.count * sizeof(Vector2);
+        g_astroid_hexBuffer = R_AllocStaticBuffer(g_astroid_hexBuffer, size, g_astroid_hexShape.data);
+        node->params.mesh_vertices = g_astroid_hexBuffer;
+        node->params.vert_count = g_astroid_hexShape.count;
 
         // Initialize group with N instances
         node->batches = R_MakeBatchList(sizeof(R_Hull2DInst));
-        for(u32 i = 0; i < g_hexInstCount; i += 1)
+        for(u32 i = 0; i < g_astroid_hexInstCount; i += 1)
         {
-          R_Hull2DInst *hull_inst = (R_Hull2DInst*)R_PushBatchInst(GAME.arena, &node->batches, g_hexInstCount);
-          Transform tr = g_hexTransforms[i];
+          R_Hull2DInst *hull_inst = (R_Hull2DInst*)R_PushBatchInst(GAME.arena, &node->batches, g_astroid_hexInstCount);
+          Xform xform = g_astroid_hexXforms[i];
+          Vector2 tr = xform.tr;
+          f32     rt = xform.rt;
+          Vector2 sc = xform.sc;
+
           Matrix model = MatrixIdentity();
-          model = MatrixMultiply(model, MatrixScale(tr.scale.x, tr.scale.y, 1.0f));
-          model = MatrixMultiply(model, MatrixTranslate(tr.translation.x, tr.translation.y, 0.0f));
+          model = MatrixMultiply(model, MatrixScale(sc.x, sc.y, 1.0f));
+          model = MatrixMultiply(model, MatrixTranslate(tr.x, tr.y, 0.0f));
           hull_inst->model = MatrixTranspose(model);
         }
       }
-    }
 
+      // Initialize a 2D batch group for player
+      {
+        // Allocate a batch group
+        R_BatchGroup2DNode *node = PushArray(GAME.arena, R_BatchGroup2DNode, 1);
+        QueuePush(batch_groups->first, batch_groups->last, node);
+        batch_groups->node_count += 1;
+
+        // Allocate static mesh vertices buffer.
+        u32 size = g_playerShape.count * sizeof(Vector2);
+        g_playerBuffer = R_AllocStaticBuffer(g_playerBuffer, size, g_playerShape.data);
+        node->params.mesh_vertices = g_playerBuffer;
+        node->params.vert_count = g_playerShape.count;
+
+        // Initialize group with N instances
+        node->batches = R_MakeBatchList(sizeof(R_Hull2DInst));
+        g_playerInst = (R_Hull2DInst*)R_PushBatchInst(GAME.arena, &node->batches, 1);
+        Xform xform = *g_playerXform;
+        Vector2 tr = xform.tr;
+        f32     rt = xform.rt;
+        Vector2 sc = xform.sc;
+
+        Matrix model = MatrixIdentity();
+        model = MatrixMultiply(model, MatrixScale(sc.x, sc.y, 1.0f));
+        model = MatrixMultiply(model, MatrixTranslate(tr.x, tr.y, 0.0f));
+        g_playerInst->model = MatrixTranspose(model);
+      }
+    }
     ProfEnd();
   }
 }

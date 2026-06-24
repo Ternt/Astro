@@ -135,7 +135,7 @@ static void *R_PushBatchInst(Arena *arena, R_BatchList *list, u32 batch_inst_cap
 
 static void R_Init(void)
 {
-  Arena *arena = ArenaAlloc(ARENA_DEFAULT_CAP);
+  Arena *arena = ArenaAlloc("render_core", ARENA_DEFAULT_CAP);
   RENDER = PushArray(arena, R_RenderState, 1);
   RENDER->arena = arena;
 

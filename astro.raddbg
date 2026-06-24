@@ -1,0 +1,33 @@
+// raddbg 0.9.26 project file
+
+recent_file: path: "src/test/test_ecs.c"
+recent_file: path: "src/astro/game.c"
+recent_file: path: "src/astro/arena.c"
+recent_file: path: "src/test/test_custom_renderer.c"
+recent_file: path: "src/astro/entity.c"
+target:
+{
+  executable: "build/test_custom_renderer.exe"
+  working_directory: build
+  enabled: 0
+  arguments: "1000 800"
+  entry_point: Game_EntryPoint
+}
+target:
+{
+  executable: "build/test_ecs.exe"
+  working_directory: "../Astro"
+  enabled: 1
+  entry_point: Game_EntryPoint
+  arguments: "900 900"
+}
+debug_info:
+{
+  path: "C:/Source/Astro/build/test_custom_renderer.pdb"
+  timestamp: 66218128291410
+}
+debug_info:
+{
+  path: "C:/Source/Astro/build/test_ecs.pdb"
+  timestamp: 66218289896585
+}

@@ -32,7 +32,7 @@ static Game GAME = zero_struct;
 //- Game World Functions
 
 // helpers
-static void Game_HandleZoomAndDrag(void);
+static void Game_HandleCameraControls(void);
 static void Game_DrawGrid(f32 w, f32 h, f32 cell_size, Color color);
 
 ////////////////////////////

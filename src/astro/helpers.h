@@ -45,6 +45,20 @@ typedef double    f64;
 typedef size_t    usize;
 typedef uintptr_t uptr;
 
+typedef struct Xform {
+  Vector2 tr;
+  f32     rt;
+  Vector2 sc;
+} Xform;
+
+typedef enum Direction {
+  Direction_Null  = -1,
+  Direction_North = 0,
+  Direction_South = 1,
+  Direction_West  = 2,
+  Direction_East  = 3
+} Direction;
+
 ////////////////////////////
 //- Helper Intrinsics
 
@@ -161,7 +175,8 @@ zchk(p) ? (zset((n)->prev), (n)->next = (f), (zchk(f) ? (0) : ((f)->prev = (n)))
 ////////////////////////////
 //- Helper Functions
 
-static inline Vector2 world_ToScreen(Vector2 v);
-static inline f32 rand_f32(f32 a, f32 b);
+static inline Vector2 WorldToScreen(Vector2 v);
+static inline f32 RandF32(f32 a, f32 b);
+static inline u8 RandU8(u8 a, u8 b);
 
 #endif // HELPERS_H
