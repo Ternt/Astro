@@ -64,7 +64,9 @@ typedef struct R_BatchGroup2DList {
 //- Instance Type Definitions
 
 typedef struct R_Hull2DInst {
-  Matrix model;
+  Vector2 tr;
+  f32 rt;
+  Vector2 sc;
 } R_Hull2DInst;
 
 ////////////////////////////
@@ -136,6 +138,7 @@ static GLuint R_AllocBuffer(R_BufferType type, u32 size, void *data);
 static void R_ReleaseBuffer(GLuint buffer);
 
 // pipeline builder functions
+static R_PassArray *R_AllocPassArray(Arena *arena);
 static R_Pass *R_PushPass(R_PassArray *passes, R_PassType type);
 static R_BatchList R_MakeBatchList(u32 inst_size);
 static void *R_PushBatchInst(Arena *arena, R_BatchList *list, u32 batch_inst_cap);

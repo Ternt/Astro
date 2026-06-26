@@ -1,3 +1,4 @@
 build
 libs
-includes/tracy/**
+traces
+src/third_party/tracy/**

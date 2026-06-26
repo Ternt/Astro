@@ -2,12 +2,12 @@
 
 static Arena *ArenaAlloc(const char *name, u32 cap)
 {
-  Arena *result = (Arena*)malloc(cap);
-  result->pos = ARENA_HEADER_SIZE;
-  result->cap = cap;
-  result->name = name;
-  DebugCtx_PushArena(result);
-  return result;
+  Arena *arena = (Arena*)malloc(cap);
+  arena->pos = ARENA_HEADER_SIZE;
+  arena->cap = cap;
+  arena->name = name;
+  DebugCtx_PushArena(arena);
+  return arena;
 }
 
 static void ArenaRelease(Arena *arena)
@@ -67,13 +67,20 @@ static void TempEnd(Temp temp)
   ArenaPopTo(arena, temp.pos);
 }
 
-static void DebugCtx_Init(void)
+static void DebugCtx_Alloc(void)
 {
-  debug_arena = (Arena*)malloc(ARENA_DEFAULT_CAP);
+  u32 cap = KB(4);
+  debug_arena = (Arena*)malloc(cap);
   debug_arena->pos = ARENA_HEADER_SIZE;
-  debug_arena->cap = ARENA_DEFAULT_CAP;
+  debug_arena->cap = cap;
   debug_arena->name = "debug_arenas";
-  debug_ctx = PushArray(debug_arena, ArenaDebugCtx, 1);
+  debug_ctx = PushArray(debug_arena, DebugCtx, 1);
+  debug_ctx->interval = 0.05f;
+}
+
+static void DebugCtx_Release(void)
+{
+  free(debug_arena);
 }
 
 static void DebugCtx_PushArena(Arena *arena)
@@ -81,5 +88,15 @@ static void DebugCtx_PushArena(Arena *arena)
   ArenaNode *node = PushArray(debug_arena, ArenaNode, 1);
   QueuePush(debug_ctx->first, debug_ctx->last, node);
   debug_ctx->count += 1;
-  node->v = arena;
+  node->arena = arena;
+}
+
+static void DebugCtx_TakeSnapshot(SnapshotRing *snapshots, Arena *arena)
+{
+  Snapshot snap = zero_struct;
+  snap.pos = arena->pos;
+  snap.cap = arena->cap;
+
+  snapshots->v[snapshots->count] = snap;
+  snapshots->count = (snapshots->count + 1)%DEBUG_SNAPSHOT_CAP;
 }

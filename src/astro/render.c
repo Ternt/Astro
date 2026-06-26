@@ -7,8 +7,10 @@
 
 const R_Attribs r_geo_shader_input_attribs[] = 
 {
-  { 0, "in_pos",   GL_FLOAT, 2 },
-  { 1, "in_model", GL_FLOAT, 4 },
+  { 0, "in_pos", GL_FLOAT, 2 },
+  { 1, "in_tr",  GL_FLOAT, 2 },
+  { 2, "in_rt",  GL_FLOAT, 1 },
+  { 3, "in_sc",  GL_FLOAT, 2 },
 };
 
 const R_Attribs r_geo_shader_output_attribs[] = 
@@ -78,12 +80,12 @@ static GLuint R_AllocStaticBuffer(GLuint handle, u32 size, void *data)
   return result;
 }
 
-static R_PassArray R_MakePassArray(void)
+static R_PassArray *R_AllocPassArray(Arena *arena)
 {
-  R_PassArray passes = zero_struct;
+  R_PassArray *passes = PushArray(arena, R_PassArray, 1);
   for(u32 i = 0; i < R_PassType_COUNT; i += 1)
   {
-    R_Pass *pass = &passes.v[i];
+    R_Pass *pass = &passes->v[i];
     pass->type = R_PassType_NULL;
   }
   return passes;
@@ -245,15 +247,17 @@ static void R_DrawAll(R_PassArray *passes)
           {
             R_AttribsArray inputs = r_shader_input_attribs[R_PassType_Geo2D];
 
-            // bind static buffer and set vertex attribs
+            // @bind: static buffer.
             glBindBuffer(GL_ARRAY_BUFFER, n->params.mesh_vertices);
+
+            // @v_attribs[0]: set vertex position.
             {
               glEnableVertexAttribArray(inputs.v[0].index);
               glVertexAttribDivisor(inputs.v[0].index, 0);
               glVertexAttribPointer(inputs.v[0].index, inputs.v[0].count, inputs.v[0].type, GL_FALSE, sizeof(Vector2), null);
             }
 
-            // stream dynamic data to buffer (per-instance data).
+            // @bind: dynamic buffer for streaming per-instance data.
             R_BatchList *batches = &n->batches;
             {
               u32 offset = 0;
@@ -265,16 +269,22 @@ static void R_DrawAll(R_PassArray *passes)
               }
             } 
 
-            // set model matrix attribs
-            for(u32 col = 0; col < 4; col += 1)
+            // @v_attribs[1,]: set instance data.
             {
-              GLuint loc = inputs.v[1].index + col; // base location (1) + column offset
-              glEnableVertexAttribArray(loc);
-              glVertexAttribDivisor(loc, 1);
-              glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, sizeof(R_Hull2DInst), (void*)(sizeof(f32) * 4 * col));
+              usize off = 0;
+              for(u32 i = 1; i < ArrayCount(r_geo_shader_input_attribs); i += 1)
+              {
+                GLenum type = inputs.v[i].type;
+                GLuint loc = inputs.v[i].index;
+                u32 count = inputs.v[i].count;
+                glEnableVertexAttribArray(loc);
+                glVertexAttribDivisor(loc, 1);
+                glVertexAttribPointer(loc, count, type, GL_FALSE, sizeof(R_Hull2DInst), (void*)(off));
+                off += count*sizeof(f32);
+              }
             }
 
-            // set shader uniforms.
+            // @uniforms: set view and projection matrices.
             {
               u32 view_loc = glGetUniformLocation(program, "u_view");
               glUniformMatrix4fv(view_loc, 1, GL_FALSE, MatrixToFloat(params->view));
@@ -283,6 +293,7 @@ static void R_DrawAll(R_PassArray *passes)
               glUniformMatrix4fv(proj_loc, 1, GL_FALSE, MatrixToFloat(params->proj));
             }
 
+            // @draw: instances.
             u32 vert_count = n->params.vert_count;
             u32 inst_count = batches->batch_total_size / batches->inst_size;
             glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, vert_count, inst_count);

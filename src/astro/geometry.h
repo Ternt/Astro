@@ -13,15 +13,28 @@
 ////////////////////////////
 //- Geometry Type Definitions
 
-typedef struct NGon {
+typedef struct Mesh2D {
   Vector2 *data;
-  u32 count;
-} NGon;
+  u32 vert_count;
+} Mesh2D;
+
+typedef struct Geo_Ctx {
+  Arena *vertex_arena;
+  u32 total_vert_count;
+} Geo_Ctx;
+
+////////////////////////////
+//- Geometry Globals
+
+static Geo_Ctx *GEO = zero_struct;
 
 ////////////////////////////
 //- Geometry Functions
 
-static NGon Geo_GenerateNGonConvex(Arena *arena, u32 sides);
-static NGon Geo_GenerateNGonConcave(Arena *arena, u32 sides, f32 inner_radius_pct);
+static Mesh2D Geo_GenMesh2DConvex(u32 sides);
+static Mesh2D Geo_GenMesh2DConcave(u32 sides, f32 inner_radius_pct);
+
+static void Geo_Init(void);
+static void Geo_Quit(void);
 
 #endif // GEOMETRY_H

@@ -45,19 +45,29 @@ typedef double    f64;
 typedef size_t    usize;
 typedef uintptr_t uptr;
 
-typedef struct Xform {
-  Vector2 tr;
-  f32     rt;
-  Vector2 sc;
-} Xform;
+typedef u32 Axis;
+enum 
+{
+  Axis_X,
+  Axis_Y,
+  Axis_COUNT,
+};
 
-typedef enum Direction {
+typedef u32 Direction;
+enum
+{
   Direction_Null  = -1,
   Direction_North = 0,
   Direction_South = 1,
   Direction_West  = 2,
   Direction_East  = 3
-} Direction;
+};
+
+typedef struct Xform {
+  Vector2 tr;
+  f32 rt;
+  Vector2 sc;
+} Xform;
 
 ////////////////////////////
 //- Helper Intrinsics
@@ -118,10 +128,11 @@ typedef enum Direction {
 
 #define MemoryCopy(d,s,c)   memmove(d,s,c)
 #define MemoryMatch(a,b,sz) (memcmp(a,b,sz)==0)
-
 #define MemoryZero(p,sz)    memset(p,0,sz)
 #define MemoryZeroArray(a)  MemoryZero(a,sizeof(a))
 #define MemoryZeroStruct(s) MemoryZero(s,sizeof(*(s)))
+
+#define EachIdx(it, min, max, inc) (u32 it = (min); it < (max); it += (inc))
 
 ////////////////////////////////
 //- Linked List Builder Macros

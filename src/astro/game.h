@@ -21,6 +21,11 @@ typedef struct Game {
   Font default_font;
   Camera2D camera_2d;
   f32 camera_zoom;
+  f32 start;
+  f32 elapsed;
+#if BUILD_DEBUG
+  b32 is_debug_arenas;
+#endif
 } Game;
 
 ////////////////////////////

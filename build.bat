@@ -59,8 +59,7 @@ if not exist build mkdir build
 :: --- Build -----------------------------------------------------------------
 pushd build
 if "1"=="1" (
-  REM %compile% ../src/test/test_ecs.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_ecs.exe 
-  %compile% ../src/test/test_ecs.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_ecs.exe 
-  REM call emcc ../test/test_ecs.c -o astro.js -g -Wall -I../astro -I../includes -L../libs -lraylib.web -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -w -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES3 -s USE_GLFW=3 -s ALLOW_MEMORY_GROWTH=1 -s ASSERTIONS=1 -std=c99 --preload-file ../astro/fonts
+  %compile% ../src/test/test_custom_renderer.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
+  call emcc ../src/test/test_custom_renderer.c -o astro.js -g -Wall -I../src/astro/ -I../src/third_party/ -L../libs -lraylib.web -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -w -DBUILD_DEBUG -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES3 -s USE_GLFW=3 -s ALLOW_MEMORY_GROWTH=1 -s ASSERTIONS=1 -std=c99 --preload-file ../assets/
 )
 popd build

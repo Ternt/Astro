@@ -4,6 +4,13 @@
 #define ARENA_H
 
 ////////////////////////////
+//- Arena Constants
+
+#define ARENA_HEADER_SIZE Clamp(32, sizeof(Arena), 64)
+#define ARENA_DEFAULT_CAP KB(1)
+#define DEBUG_SNAPSHOT_CAP 64
+
+////////////////////////////
 //- Arena Type Definitions
 
 // Arena Header Type
@@ -13,20 +20,6 @@ typedef struct Arena {
   u32 pos;
 } Arena;
 
-// Arena Node
-typedef struct ArenaNode ArenaNode;
-struct ArenaNode {
-  ArenaNode *next;
-  Arena *v;
-};
-
-// Arena Debugging Context
-typedef struct ArenaDebugCtx {
-  ArenaNode *first;
-  ArenaNode *last;
-  u32 count;
-} ArenaDebugCtx;
-
 // Temp Type
 typedef struct Temp {
   Arena *arena;
@@ -34,16 +27,41 @@ typedef struct Temp {
 } Temp;
 
 ////////////////////////////
+//- Memory Debugging Type Definitions
+
+// Snapshot of Arena
+typedef struct Snapshot {
+  u32 pos;
+  u32 cap;
+} Snapshot;
+
+// Snapshot Ring Buffer Type
+typedef struct SnapshotRing {
+  Snapshot v[DEBUG_SNAPSHOT_CAP];
+  u32 count;
+} SnapshotRing;
+
+// Node Type Containing Memory Snapshots
+typedef struct ArenaNode ArenaNode;
+struct ArenaNode {
+  ArenaNode *next;
+  Arena *arena;
+  SnapshotRing snapshots;
+};
+
+// Debugging Context
+typedef struct DebugCtx {
+  ArenaNode *first;
+  ArenaNode *last;
+  u32 count;
+  f32 interval;
+} DebugCtx;
+
+////////////////////////////
 //- Arena Globals
 
 static Arena *debug_arena = null;
-static ArenaDebugCtx *debug_ctx = null;
-
-////////////////////////////
-//- Arena Constants
-
-#define ARENA_HEADER_SIZE Clamp(32, sizeof(Arena), 64)
-#define ARENA_DEFAULT_CAP KB(1)
+static DebugCtx *debug_ctx = null;
 
 ////////////////////////////
 //- Arena Functions
@@ -59,8 +77,10 @@ static Temp   TempBegin(Arena *arena);
 static void   TempEnd(Temp temp);
 
 // arena debug operations
-static void DebugCtx_Init(void);
+static void DebugCtx_Alloc(void);
+static void DebugCtx_Release(void);
 static void DebugCtx_PushArena(Arena *arena);
+static void DebugCtx_TakeSnapshot(SnapshotRing *snapshots, Arena *arena);
 
 // function-like helper macros
 #define PushArrayAligned(a,T,c,align) ArenaPush(a,(c)*sizeof(T),align)
