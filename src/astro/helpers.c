@@ -1,5 +1,16 @@
 // 2026-06-14
 
+////////////////////////////
+//- Third-Party Includes
+
+# define XXH_INLINE_ALL
+# define XXH_IMPLEMENTATION
+# define XXH_STATIC_LINKING_ONLY
+#include "xxhash/xxhash.h"
+
+////////////////////////////
+//- Helpers
+
 static inline Vector2 WorldToScreen(Vector2 v)
 {
   return (Vector2){ v.x, -v.y };
@@ -83,4 +94,19 @@ static Vector2 MeasureTextStyled(Font font, const char *text, float fontSize, fl
   textSize.y = textHeight;
 
   return textSize;
+}
+
+////////////////////////////
+//- String Helpers
+
+static u32 CstringLength(char *cstr)
+{
+  u32 len = 0;
+  if(cstr)
+  {
+    char *p = cstr;
+    for(; *p!='\0'; p+=1);
+    len = p - cstr;
+  }
+  return len;
 }

@@ -18,23 +18,10 @@ typedef struct Mesh2D {
   u32 vert_count;
 } Mesh2D;
 
-typedef struct Geo_Ctx {
-  Arena *vertex_arena;
-  u32 total_vert_count;
-} Geo_Ctx;
-
-////////////////////////////
-//- Geometry Globals
-
-static Geo_Ctx *GEO = zero_struct;
-
 ////////////////////////////
 //- Geometry Functions
 
-static Mesh2D Geo_GenMesh2DConvex(u32 sides);
-static Mesh2D Geo_GenMesh2DConcave(u32 sides, f32 inner_radius_pct);
-
-static void Geo_Init(void);
-static void Geo_Quit(void);
+static Mesh2D Geo_GenMesh2DConvex(Arena *arena, u32 sides);
+static Mesh2D Geo_GenMesh2DConcave(Arena *arena, u32 sides, f32 inner_radius_pct);
 
 #endif // GEOMETRY_H

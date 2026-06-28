@@ -7,16 +7,17 @@ recent_file: path: "src/test/test_custom_renderer.c"
 recent_file: path: "src/astro/entity.c"
 target:
 {
-  executable: "build/test_collision.exe"
+  executable: "build/test_custom_renderer.exe"
   working_directory: "../Astro"
-  arguments: "1200 1200 60"
   entry_point: Game_EntryPoint
+  enabled: 0
+  arguments: "1200 1200"
 }
 target:
 {
-  executable: "build/test_custom_renderer.exe"
+  executable: "build/test_physics.exe"
   working_directory: "../Astro"
-  arguments: "1200 1200 60"
+  arguments: "1200 1200"
   entry_point: Game_EntryPoint
   enabled: 1
 }

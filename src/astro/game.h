@@ -7,6 +7,13 @@
 #define GAME_H
 
 ////////////////////////////
+//- Layer Configuration
+
+#ifndef GAME_ARENA_SIZE
+#define GAME_ARENA_SIZE KB(4)
+#endif
+
+////////////////////////////
 //- Emscripten Includes
 
 #if PLATFORM_WEB
@@ -14,15 +21,17 @@
 #endif
 
 ////////////////////////////
-//- Game Mega Struct
+//- Game Typedefs
 
 typedef struct Game {
   Arena *arena;
+  Arena *vertex_arena;
   Font default_font;
   Camera2D camera_2d;
   f32 camera_zoom;
   f32 start;
   f32 elapsed;
+  u32 total_vert_count;
 #if BUILD_DEBUG
   b32 is_debug_arenas;
 #endif
@@ -34,11 +43,14 @@ typedef struct Game {
 static Game GAME = zero_struct;
 
 ////////////////////////////
-//- Game World Functions
+//- Game World and Utility Helpers
 
 // helpers
+static void Game_HandleDebugControls(void);
 static void Game_HandleCameraControls(void);
 static void Game_DrawGrid(f32 w, f32 h, f32 cell_size, Color color);
+static void Game_DrawOrigin(Color color);
+static void Game_DebugArena(void);
 
 ////////////////////////////
 //- Application Structure Functions
@@ -54,9 +66,5 @@ static void Game_EntryPoint(int argc, char *argv[]);
 // main loop, internal, not-user defined
 static force_inline void Game_Tick(void);
 static force_inline void Game_MainLoop(void);
-
-// ui marker macros (does nothing, code decoration)
-#define BeginUI() (void)(0)
-#define EndUI() (void)(0)
 
 #endif // GAME_H

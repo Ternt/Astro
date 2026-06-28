@@ -92,3 +92,27 @@ const struct { const char *data; u32 size; } r_vs_shader_src[R_PassType_COUNT] =
 const struct { const char *data; u32 size; } r_ps_shader_src[R_PassType_COUNT] = {
   { r_geo2d_ps_shader_src, sizeof(r_geo2d_ps_shader_src) },
 };
+
+const R_Ogl_Attribs r_geo_shader_input_attribs[] = 
+{
+  { 0, "in_pos", GL_FLOAT, 2 },
+  { 1, "in_tr",  GL_FLOAT, 2 },
+  { 2, "in_rt",  GL_FLOAT, 1 },
+  { 3, "in_sc",  GL_FLOAT, 2 },
+};
+
+const R_Ogl_Attribs r_geo_shader_output_attribs[] = 
+{
+  { 0, "in_pos", GL_FLOAT, 2 },
+};
+
+const R_Ogl_AttribsArray r_shader_input_attribs[R_PassType_COUNT] =
+{
+  { r_geo_shader_input_attribs, ArrayCount(r_geo_shader_input_attribs) },
+};
+
+const R_Ogl_AttribsArray r_shader_output_attribs[R_PassType_COUNT] =
+{
+  { r_geo_shader_output_attribs, ArrayCount(r_geo_shader_output_attribs) },
+};
+

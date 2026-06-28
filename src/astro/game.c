@@ -1,19 +1,15 @@
 // 2026-06-14
 
-#define DEFAULT_FONT_PATH "assets/jetbrains-mono.ttf"
-#define CAMERA_MOVE_MULT 0.25
-
-//
-// helpers
-//
+////////////////////////////
+//- Game World and Utility Helpers
 
 static void Game_HandleDebugControls(void)
 {
-  if(IsKeyDown(KEY_MINUS))
+  if(IsKeyDown(KEY_D))
   {
     GAME.is_debug_arenas = false;
   }
-  if(IsKeyDown(KEY_EQUAL))
+  if(IsKeyDown(KEY_X))
   {
     GAME.is_debug_arenas = true;
   }
@@ -39,16 +35,13 @@ static void Game_DrawGrid(float w, float h, float cell_size, Color color)
 {
   float half_w = w * 0.5f;
   float half_h = h * 0.5f;
-
   int cols = (u32)(w / cell_size);
   int rows = (u32)(h / cell_size);
-
   for(u32 i = 0; i <= cols; i += 1)
   {
     float x = -half_w + i * cell_size;
     DrawLineV((Vector2){x, -half_h}, (Vector2){x, half_h}, color);
   }
-
   for(u32 i = 0; i <= rows; i += 1)
   {
     float y = -half_h + i * cell_size;
@@ -67,34 +60,37 @@ static void Game_DebugArena(void)
 #if BUILD_DEBUG
   if(GAME.is_debug_arenas)
   {
+    DebugArenaMap *arena_map = &DEBUG->arena_map;
+    u32 arena_count = arena_map->iter.node_count;
     b32 snapshot_taken = false;
 
-    f32 w = GetScreenWidth();
+    f32 w = GetScreenWidth()*0.975;
     f32 h = GetScreenHeight();
 
     f32 padding = 5.0f;
-    f32 max_text_width = 110.0f;
+    f32 max_text_width = 140.0f;
     f32 snapshot_bar_p = 2;  // padding
-    f32 snapshot_bar_h = 100; // height
+    f32 snapshot_bar_h = 80; // height
 
     u32 panel_off = 0;
     f32 panel_1_w = max_text_width;
-    f32 panel_1_h = (snapshot_bar_p * (debug_ctx->count + 1)) + (snapshot_bar_h * debug_ctx->count);
+    f32 panel_1_h = (snapshot_bar_p * (arena_count + 1)) + (snapshot_bar_h * arena_count);
     f32 panel_1_x = padding;
     f32 panel_1_y = ClampBot(h - panel_1_h - padding, 0);
 
     f32 panel_2_w = w-max_text_width;
-    f32 panel_2_h = (snapshot_bar_p * (debug_ctx->count + 1)) + (snapshot_bar_h * debug_ctx->count);
+    f32 panel_2_h = (snapshot_bar_p * (arena_count + 1)) + (snapshot_bar_h * arena_count);
     f32 panel_2_x = max_text_width + (padding*2.0);
     f32 panel_2_y = ClampBot(h - panel_2_h, 0);
 
     f32 snapshot_bar_w = ((w-max_text_width-(padding*2.0)-(snapshot_bar_p*DEBUG_SNAPSHOT_CAP))/DEBUG_SNAPSHOT_CAP); // width
 
-    for(ArenaNode *n = debug_ctx->first; n != null; n = n->next, panel_off += 1)
+    DebugArenaMapNodeList *arenas = &arena_map->iter;
+    for(DebugArenaMapNode *n = arenas->first; n != null; n = n->next, panel_off += 1)
     {
       Arena *arena = n->arena;
       SnapshotRing *snapshots = &n->snapshots;
-      if(GAME.elapsed >= debug_ctx->interval)
+      if(GAME.elapsed >= DEBUG->interval)
       {
         DebugCtx_TakeSnapshot(snapshots, arena);
         snapshot_taken |= true;
@@ -110,8 +106,8 @@ static void Game_DebugArena(void)
       for EachIdx(i, 0, DEBUG_SNAPSHOT_CAP, 1)
       {
         Snapshot snap = snapshots->v[i];
-        if(snap.cap == 0) break;
-        f32 progress = (f32)snap.pos/(f32)snap.cap;
+        if(snap.total_cap == 0) break;
+        f32 progress = (f32)snap.total_pos/(f32)snap.total_cap;
 
         Color bar_color = LIME;
         if(InRange(progress, 0.50, 0.75)) bar_color = ORANGE;
@@ -126,7 +122,7 @@ static void Game_DebugArena(void)
       }
 
       DR_DrawText(TextFormat("arena:%s", arena->name), ar_name_x, ar_name_y, WHITE);
-      DR_DrawTextEx(TextFormat("%u:%u bytes", arena->pos, arena->cap), ar_bytes_x, ar_bytes_y, ar_bytes_font_size, GRAY);
+      DR_DrawTextEx(TextFormat("%u:%u bytes", ArenaPos(arena), ArenaCap(arena)), ar_bytes_x, ar_bytes_y, ar_bytes_font_size, GRAY);
     }
     if(snapshot_taken)
     {
@@ -136,10 +132,8 @@ static void Game_DebugArena(void)
 #endif
 }
 
-
-//
-// main loop
-//
+////////////////////////////
+//- Application Structure Functions
 
 static force_inline void Game_Tick(void)
 {
@@ -150,10 +144,12 @@ static force_inline void Game_Tick(void)
   Game_UpdateState();
 
   BeginDrawing();
-  ClearBackground(BLACK);
+  R_FrameBegin();
+    ClearBackground(BLACK);
     Game_DrawWorld();
     Game_DrawUI();
     Game_DrawDebug();
+  R_FrameEnd();
   EndDrawing();
 
   f32 end = GetTime();
@@ -178,11 +174,10 @@ int main(int argc, char *argv[])
 {
   u32 w = atoi(argv[1]);
   u32 h = atoi(argv[2]);
-  u32 fps = atoi(argv[3]);
   InitWindow(w,h,"Astro");
 
   // load font
-  const char *font_path = TextFormat("%s/%s", GetWorkingDirectory(), DEFAULT_FONT_PATH);
+  const char *font_path = TextFormat("%s/%s", GetWorkingDirectory(), "assets/jetbrains-mono.ttf");
   GAME.default_font = LoadFontEx(font_path, 32, 0, 0);
 
   // camera values
@@ -198,18 +193,23 @@ int main(int argc, char *argv[])
 
   // debugging
   GAME.is_debug_arenas = true;
-
-  // game entry point
   DebugCtx_Alloc();
-  GAME.arena = ArenaAlloc("game_core", MB(64));
+
+  GAME.arena = ArenaAlloc("game_core", GAME_ARENA_SIZE, true);
+  GAME.vertex_arena = ArenaAlloc("vertices", KB(1), false);
+
   R_Init();
-  Geo_Init();
-  {
-    Game_EntryPoint(argc, argv);
-    GAME.start = GetTime();
-    Game_MainLoop();
-  }
+  P2_Init();
+
+  // Main Loop
+  Game_EntryPoint(argc, argv);
+  GAME.start = GetTime();
+  Game_MainLoop();
+
+  P2_Quit();
   R_Quit();
+
+  ArenaRelease(GAME.vertex_arena);
   ArenaRelease(GAME.arena);
   DebugCtx_Release();
 

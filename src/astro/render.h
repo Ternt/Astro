@@ -10,6 +10,13 @@
 #define RENDER_H
 
 ////////////////////////////
+//- Layer Configuration
+
+#ifndef R_OGL_DEFAULT_BUFFER_SIZE
+#define R_OGL_DEFAULT_BUFFER_SIZE KB(64)
+#endif
+
+////////////////////////////
 //- Render Enumerations
 
 typedef enum R_BufferType {
@@ -37,7 +44,7 @@ struct R_BatchNode{
 typedef struct R_BatchList {
   R_BatchNode *first;
   R_BatchNode *last;
-  u32 batch_total_size;
+  u32 total_batch_size;
   u32 batch_count;
   u32 inst_size;
 } R_BatchList;
@@ -103,17 +110,17 @@ typedef struct R_PassArray {
 ////////////////////////////
 //- OpenGL Shader Attributes Type Helpers
 
-typedef struct R_Attribs {
+typedef struct R_Ogl_Attribs {
   GLuint index;
   char *name;
   GLenum type;
   GLsizei count;
-} R_Attribs;
+} R_Ogl_Attribs;
 
-typedef struct R_AttribsArray {
-  const R_Attribs *v; 
+typedef struct R_Ogl_AttribsArray {
+  const R_Ogl_Attribs *v; 
   u32 count;
-} R_AttribsArray;
+} R_Ogl_AttribsArray;
 
 ////////////////////////////
 //- Render Type Definitions
@@ -142,6 +149,9 @@ static R_PassArray *R_AllocPassArray(Arena *arena);
 static R_Pass *R_PushPass(R_PassArray *passes, R_PassType type);
 static R_BatchList R_MakeBatchList(u32 inst_size);
 static void *R_PushBatchInst(Arena *arena, R_BatchList *list, u32 batch_inst_cap);
+
+static void R_FrameBegin(void);
+static void R_FrameEnd(void);
 
 static void R_Init(void);
 static void R_Quit(void);

@@ -8,6 +8,16 @@
 // [ ] A mesh map where each entry corresponds to a 
 //     mesh. Each mesh contains a unique number of 
 //     vertices.
+// [ ] Take snapshots of previous arena's in an arena
+//     chain.
+// [ ] Rethink object allocation for the physics system
+//     and how it will play with the other systems. Maybe 
+//     have an arena for every group of data? This way
+//     the data is next to each other in memory + is 
+//     growable. We can have our SoA layout while also 
+//     having it be dynamic. On top of this, we only need 
+//     one ID, which could be limited to a u32. This could
+//     potentially save up on some space.
 
 ////////////////////////////
 //- Third Party Includes
@@ -69,15 +79,18 @@
 ////////////////////////////
 //- Game Globals
 
-f32           g_worldBoundX = 10000.0f;
-f32           g_worldBoundY = 10000.0f;
+f32           g_worldBoundX = 500.0f;
+f32           g_worldBoundY = 500.0f;
 R_PassArray*  g_passes = null;
 
-u32           g_astroid_hexInstCount = 1024 * 1000;
+P2_WorldId    g_world_id = null_id;
+
+u32           g_astroid_hexInstCount = 1024;
 GLuint        g_astroid_hexBuffer = 0;
 Mesh2D        g_astroid_hexShape = zero_struct;
 Xform*        g_astroid_hexXforms = null;
 R_Hull2DInst* g_astroid_hexInst = null;
+P2_BodyId*    g_astroid_hexBodyIds = null;
 
 ////////////////////////////
 //- Game Loop Pipeline
@@ -86,6 +99,7 @@ static inline void
 Game_UpdatePhysics(void)
 {
   ProfBegin("Game_UpdatePhysics");
+  P2_StepWorld(g_world_id, GetFrameTime());
   ProfEnd();
 }
 
@@ -93,13 +107,12 @@ static inline void
 Game_UpdateState(void)
 {
   ProfBegin("Game_UpdateState");
-  Game_HandleCameraControls();
   Game_HandleDebugControls();
+  Game_HandleCameraControls();
 
   // build rendering pipeline
   {
     ProfBegin("Push Instances");
-
     g_passes = R_AllocPassArray(GAME.arena);
 
     // geo2d pass
@@ -130,10 +143,10 @@ Game_UpdateState(void)
         node->batches = R_MakeBatchList(sizeof(R_Hull2DInst));
         for(u32 i = 0; i < g_astroid_hexInstCount; i += 1)
         {
-          u32 inst_cap = R_OGL_DEFAULT_BUFFER_SIZE/sizeof(R_Hull2DInst);
+          u32 inst_cap = Min(g_astroid_hexInstCount, R_OGL_DEFAULT_BUFFER_SIZE/sizeof(R_Hull2DInst));
           R_Hull2DInst *hull_inst = (R_Hull2DInst*)R_PushBatchInst(GAME.arena, &node->batches, inst_cap);
-          hull_inst->tr = g_astroid_hexXforms[i].tr;
-          hull_inst->rt = g_astroid_hexXforms[i].rt;
+          hull_inst->tr = P2_GetBodyPosition(g_astroid_hexBodyIds[i]);
+          hull_inst->rt = P2_GetBodyRotation(g_astroid_hexBodyIds[i]);
           hull_inst->sc = g_astroid_hexXforms[i].sc;
         }
       }
@@ -191,16 +204,41 @@ Game_DrawDebug(void)
 
 static void Game_EntryPoint(int argc, char *argv[])
 {
+  P2_WorldParams world_params = zero_struct;
+  world_params.bounds = (Vector2){g_worldBoundX, g_worldBoundY};
+  world_params.gravity = 9.8f;
+  g_world_id = P2_CreateWorld(&world_params);
+
   // initialize per-instance randomized transforms for astroids
-  g_astroid_hexShape = Geo_GenMesh2DConvex(GAME.vertex_arena, 8);
+  g_astroid_hexShape = Geo_GenMesh2DConvex(GAME.vertex_arena, 6);
   g_astroid_hexXforms = PushArray(GAME.arena, Xform, g_astroid_hexInstCount);
+  g_astroid_hexBodyIds = PushArray(GAME.arena, P2_BodyId, g_astroid_hexInstCount);
   for(u32 i = 0; i < g_astroid_hexInstCount; i += 1)
   {
-    f32 randScale = RandF32(1.0f, 2.5f);
-    f32 randPosX  = RandF32(-0.5*g_worldBoundX, 0.5*g_worldBoundX);
-    f32 randPosY  = RandF32(-0.5*g_worldBoundY, 0.5*g_worldBoundY);
 
-    g_astroid_hexXforms[i].sc = (Vector2){randScale, randScale};
-    g_astroid_hexXforms[i].tr = (Vector2){randPosX, randPosY};
+    // Create Game Object
+    {
+      f32 randScale = RandF32(1.0f, 2.5f);
+      f32 randRot   = RandF32(0.0, 360.0);
+      f32 randPosX  = RandF32(-0.1*g_worldBoundX, 0.1*g_worldBoundX);
+      f32 randPosY  = RandF32(-0.1*g_worldBoundY, 0.1*g_worldBoundY);
+      f32 randAccX  = RandF32(-1.0, 1.0);
+      f32 randAccY  = RandF32(-1.0, 1.0);
+      f32 randAngularAcc = RandF32(-0.5, 0.5);
+
+      g_astroid_hexXforms[i].sc = (Vector2){randScale, randScale};
+      g_astroid_hexXforms[i].tr = (Vector2){randPosX, randPosY};
+      g_astroid_hexXforms[i].rt = randRot;
+
+      P2_BodyParams body_params = zero_struct;
+      body_params.pos = (Vector2){randPosX, randPosY};
+      body_params.acc = (Vector2){randAccX, randAccY};
+      body_params.rot = randRot;
+      body_params.angular_acc = randAngularAcc;
+      body_params.mass = 1.0f;
+
+      g_astroid_hexBodyIds[i] = P2_CreateBody(g_world_id, &body_params);
+    }
+
   }
 }

@@ -27,6 +27,8 @@
 # define ProfEnd() TracyCZoneEnd(ctx)
 # define ProfScopeBegin() 
 # define ProfScopeEnd() TracyCFrameMark
+# define ProfMemoryAlloc(ptr, sz, name) TracyCAllocN(ptr, sz, name)
+# define ProfMemoryFree(ptr, name) TracyCFreeN(ptr, name)
 #endif
 
 ////////////////////////////
@@ -37,6 +39,8 @@
 # define ProfEnd() (void)(0)
 # define ProfScopeBegin() (void)(0) 
 # define ProfScopeEnd() (void)(0)
+# define ProfMemoryAlloc(ptr, sz, name) (void)(0)
+# define ProfMemoryFree(ptr, name) (void)(0)
 #endif
 
 #endif // PROFILING_H
