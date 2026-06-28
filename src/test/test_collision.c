@@ -1,23 +1,4 @@
-// 2026-06-17
-//
-// TODO list (features, improvements, and bug fixes)
-// -------------------------------------------------
-// [ ] Resize window when resizing occurs in the 
-//     browser. Currently window sizing is set 
-//     only on startup. 
-// [ ] A mesh map where each entry corresponds to a 
-//     mesh. Each mesh contains a unique number of 
-//     vertices.
-// [ ] Take snapshots of previous arena's in an arena
-//     chain.
-// [ ] Rethink object allocation for the physics system
-//     and how it will play with the other systems. Maybe 
-//     have an arena for every group of data? This way
-//     the data is next to each other in memory + is 
-//     growable. We can have our SoA layout while also 
-//     having it be dynamic. On top of this, we only need 
-//     one ID, which could be limited to a u32. This could
-//     potentially save up on some space.
+// 2026-06-28
 
 ////////////////////////////
 //- Build Macro Configs
@@ -45,11 +26,11 @@
 ////////////////////////////
 //- Game Globals
 
-f32           g_worldBoundX = 500.0f;
-f32           g_worldBoundY = 500.0f;
+f32           g_worldBoundX = 100.0f;
+f32           g_worldBoundY = 100.0f;
 R_PassArray*  g_passes = null;
 P2_WorldId    g_world_id = null_id;
-u32           g_astroid_hexInstCount = 1024*100;
+u32           g_astroid_hexInstCount = 2;
 GLuint        g_astroid_hexBuffer = 0;
 Mesh2D        g_astroid_hexShape = zero_struct;
 Xform*        g_astroid_hexXforms = null;
@@ -74,7 +55,7 @@ Game_UpdateState(void)
   Game_HandleDebugControls();
   Game_HandleCameraControls();
 
-  // build rendering pipeline
+  // Build rendering pipeline
   {
     ProfBegin("Push Instances");
     g_passes = R_AllocPassArray(GAME.arena);
@@ -196,9 +177,9 @@ static void Game_EntryPoint(int argc, char *argv[])
 
       P2_BodyParams body_params = zero_struct;
       body_params.pos = (Vector2){randPosX, randPosY};
-      body_params.acc = (Vector2){randAccX, randAccY};
+      body_params.acc = (Vector2){0.0, 0.0};
       body_params.rot = randRot;
-      body_params.angular_acc = randAngularAcc;
+      body_params.angular_acc = 0.0f;
       body_params.mass = 1.0f;
 
       g_astroid_hexBodyIds[i] = P2_CreateBody(g_world_id, &body_params);

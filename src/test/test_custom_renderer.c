@@ -10,61 +10,27 @@
 //     vertices.
 
 ////////////////////////////
-//- Third Party Includes
-
-#if !defined(PLATFORM_WEB)
-#include "raylib/external/glad.h"
-#else
-#include <GLES3/gl3.h>
-#endif
-#include "raylib/raylib.h"
-#include "raylib/raymath.h"
-#include "raylib/rlgl.h"
-
-////////////////////////////
 //- Build Macro Configs
 
 // profiling macros
-#if !defined(PLATFORM_WEB)
+#if !defined(PLATFORM_WEB) && defined(BUILD_DEBUG)
 #define PROFILE_TRACY 1
-#endif
-
-// opengl version
-#if defined(PLATFORM_WEB)
-# ifndef GRAPHICS_API_OPENGL_ES3
-# define GRAPHICS_API_OPENGL_ES3 1
-# endif
-#else
-# ifndef GRAPHICS_API_OPENGL_33
-# define GRAPHICS_API_OPENGL_33 1
-# endif
 #endif
 
 ////////////////////////////
 //- Game Macro Configs
 
 #define GAME_ARENA_SIZE KB(64)
-#define R_OGL_DEFAULT_BUFFER_SIZE MB(64)
+#define R_DEFAULT_OGL_BUFFER_SIZE MB(64)
 
 ////////////////////////////
 //- Game Includes
 
-#include "helpers.h"
-#include "profiling.h"
-#include "arena.h"
-#include "render.h"
-#include "geometry.h"
-#include "draw.h"
-#include "physics.h"
-#include "game.h"
+//- [h]
+#include "game/game.h"
 
-#include "helpers.c"
-#include "arena.c"
-#include "render.c"
-#include "geometry.c"
-#include "draw.c"
-#include "physics.c"
-#include "game.c"
+//- [c]
+#include "game/game.c"
 
 ////////////////////////////
 //- Game Globals
@@ -130,7 +96,7 @@ Game_UpdateState(void)
         node->batches = R_MakeBatchList(sizeof(R_Hull2DInst));
         for(u32 i = 0; i < g_astroid_hexInstCount; i += 1)
         {
-          u32 inst_cap = R_OGL_DEFAULT_BUFFER_SIZE/sizeof(R_Hull2DInst);
+          u32 inst_cap = R_DEFAULT_OGL_BUFFER_SIZE/sizeof(R_Hull2DInst);
           R_Hull2DInst *hull_inst = (R_Hull2DInst*)R_PushBatchInst(GAME.arena, &node->batches, inst_cap);
           hull_inst->tr = g_astroid_hexXforms[i].tr;
           hull_inst->rt = g_astroid_hexXforms[i].rt;

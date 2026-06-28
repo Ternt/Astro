@@ -7,6 +7,42 @@
 #define GAME_H
 
 ////////////////////////////
+//- Third Party Includes
+
+#if !defined(PLATFORM_WEB)
+#include "third_party/raylib/external/glad.h"
+#else
+#include <GLES3/gl3.h>
+#endif
+#include "third_party/raylib/raylib.h"
+#include "third_party/raylib/raymath.h"
+#include "third_party/raylib/rlgl.h"
+
+////////////////////////////
+//- Game Includes
+
+#include "core/core_helpers.h"
+#include "core/core_profiling.h"
+#include "core/core_arena.h"
+#include "core/core_render.h"
+#include "core/core_geometry.h"
+#include "core/core_draw.h"
+#include "physics/physics.h"
+
+////////////////////////////
+//- Build Configuration
+
+#if defined(PLATFORM_WEB)
+# ifndef GRAPHICS_API_OPENGL_ES3
+# define GRAPHICS_API_OPENGL_ES3 1
+# endif
+#else
+# ifndef GRAPHICS_API_OPENGL_33
+# define GRAPHICS_API_OPENGL_33 1
+# endif
+#endif
+
+////////////////////////////
 //- Layer Configuration
 
 #ifndef GAME_ARENA_SIZE

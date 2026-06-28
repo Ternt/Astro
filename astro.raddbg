@@ -10,12 +10,19 @@ target:
   executable: "build/test_custom_renderer.exe"
   working_directory: "../Astro"
   entry_point: Game_EntryPoint
-  enabled: 0
   arguments: "1200 1200"
+  enabled: 0
 }
 target:
 {
   executable: "build/test_physics.exe"
+  working_directory: "../Astro"
+  arguments: "1200 1200"
+  entry_point: Game_EntryPoint
+}
+target:
+{
+  executable: "build/test_collision.exe"
   working_directory: "../Astro"
   arguments: "1200 1200"
   entry_point: Game_EntryPoint

@@ -12,8 +12,8 @@
 ////////////////////////////
 //- Layer Configuration
 
-#ifndef R_OGL_DEFAULT_BUFFER_SIZE
-#define R_OGL_DEFAULT_BUFFER_SIZE KB(64)
+#ifndef R_DEFAULT_OGL_BUFFER_SIZE
+#define R_DEFAULT_OGL_BUFFER_SIZE KB(64)
 #endif
 
 ////////////////////////////

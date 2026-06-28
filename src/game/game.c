@@ -1,6 +1,16 @@
 // 2026-06-14
 
 ////////////////////////////
+//- Game Includes
+
+#include "core/core_helpers.c"
+#include "core/core_arena.c"
+#include "core/core_render.c"
+#include "core/core_geometry.c"
+#include "core/core_draw.c"
+#include "physics/physics.c"
+
+////////////////////////////
 //- Game World and Utility Helpers
 
 static void Game_HandleDebugControls(void)

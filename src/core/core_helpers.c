@@ -6,7 +6,7 @@
 # define XXH_INLINE_ALL
 # define XXH_IMPLEMENTATION
 # define XXH_STATIC_LINKING_ONLY
-#include "xxhash/xxhash.h"
+#include "third_party/xxhash/xxhash.h"
 
 ////////////////////////////
 //- Helpers

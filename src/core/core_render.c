@@ -3,7 +3,7 @@
 ////////////////////////////
 //- Default Shaders and Shader Information Tables
 
-#include "./shaders.c"
+#include "core/core_render_shaders.c"
 
 
 ////////////////////////////
@@ -202,7 +202,7 @@ static void R_Init(void)
   glBindVertexArray(RENDER->vao);
   glGenBuffers(1, &RENDER->vbo);
   glBindBuffer(GL_ARRAY_BUFFER, RENDER->vbo);
-  glBufferData(GL_ARRAY_BUFFER, R_OGL_DEFAULT_BUFFER_SIZE, 0, GL_DYNAMIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, R_DEFAULT_OGL_BUFFER_SIZE, 0, GL_DYNAMIC_DRAW);
 }
 
 static void R_Quit(void)

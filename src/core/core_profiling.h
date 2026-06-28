@@ -15,7 +15,7 @@
 
 #if PROFILE_TRACY
 # define TRACY_ENABLE 1
-# include "tracy/tracy.h"
+# include "third_party/tracy/tracy.h"
 # pragma comment(lib, "TracyClient.lib")
 #endif
 

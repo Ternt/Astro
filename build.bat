@@ -15,7 +15,7 @@ set auto_compile_flags=
 if "%tracy%"=="1" set auto_compile_flags=%auto_compile_flags% -DPROFILE_TRACY=1
 
 :: --- Compile/Link Line Definitions ------------------------------------------
-if "%msvc%"=="1"   set cl_common=     /nologo /I../src/astro/ /I../src/third_party/ %auto_compile_flags%
+if "%msvc%"=="1"   set cl_common=     /nologo /I../src/ %auto_compile_flags%
 if "%msvc%"=="1"   set cl_debug=      call cl %cl_common% /Z7 /Od /DBUILD_DEBUG=1
 if "%msvc%"=="1"   set cl_release=    call cl %cl_common% /Z7 /O2 /DBUILD_DEBUG=0
 if "%msvc%"=="1"   set cl_link=       /link /MANIFEST:EMBED /INCREMENTAL:NO /NODEFAULTLIB:libcmt /NODEFAULTLIB:msvcrtd /LIBPATH:../libs 
@@ -25,7 +25,7 @@ if "%clang%"=="1"  set clang_debug=
 if "%clang%"=="1"  set clang_release=  
 if "%clang%"=="1"  set clang_link=     
 if "%clang%"=="1"  set clang_out=      
-if "%emcc%"=="1"   set emcc_common=   -Wall /I../astro /I../includes %auto_compile_flags%
+if "%emcc%"=="1"   set emcc_common=   -Wall /I../src/ %auto_compile_flags%
 if "%emcc%"=="1"   set emcc_debug=    call emcc %emcc_common% -g -w -DPLATFORM_WEB -s USE_GLFW=3 -s ALLOW_MEMORY_GROWTH=1 -s ASSERTIONS=1 -std=c99
 if "%emcc%"=="1"   set emcc_release=  call emcc %emcc_common% -w -DPLATFORM_WEB -s USE_GLFW=3 -s ALLOW_MEMORY_GROWTH=1 -s ASSERTIONS=1 -std=c99
 if "%emcc%"=="1"   set emcc_link=     -L../libs 
@@ -59,6 +59,7 @@ if not exist build mkdir build
 :: --- Build -----------------------------------------------------------------
 pushd build
 if "1"=="1" (
+  %compile% ../src/test/test_collision.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
   %compile% ../src/test/test_physics.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
   %compile% ../src/test/test_custom_renderer.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
   REM call emcc ../src/test/test_custom_renderer.c -o astro.js -w -Os -I../src/astro/ -I../src/third_party/ -L../libs -lraylib.web -std=c99 --preload-file ../assets/ -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sUSE_GLFW=3 -sASYNCIFY -sALLOW_MEMORY_GROWTH=1 -DBUILD_DEBUG -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES3 

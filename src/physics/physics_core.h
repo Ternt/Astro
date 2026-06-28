@@ -1,7 +1,7 @@
-// 2026-06-25
+// 2026-06-28
 
-#ifndef PHYSICS_H
-#define PHYSICS_H
+#ifndef PHYSICS_CORE_H
+#define PHYSICS_CORE_H
 
 /////////////////////////////
 //- Physics2D Entity Ids
@@ -14,26 +14,26 @@ typedef u64 P2_BodyId;
 #define P2_MAX_BODIES max_u32
 
 /////////////////////////////
-//- Physics2D Collision Detection & Resolution Typedefs
+//- Physics2D Collision Shape Typedefs
 
 // AABB Collision Shape
-typedef struct P2_ColliderAABB {
+typedef struct P2_AABB {
   Vector2 min;
   Vector2 max;
-} P2_ColliderAABB;
+} P2_AABB;
 
 // Circle Collision Shape
-typedef struct P2_ColliderCircle {
+typedef struct P2_Circle {
   Vector2 pos;
   f32 radius;
-} P2_ColliderCircle;
+} P2_Circle;
 
 // N-Gon Collision Shape
-typedef struct P2_ColliderMesh2D {
+typedef struct P2_Mesh2D {
   Vector2 pos;
   Vector2 *vertices;
   u32 vert_count;
-} P2_ColliderMesh2D;
+} P2_Mesh2D;
 
 // Collision Shape Type
 typedef u32 P2_ColliderType;
@@ -50,9 +50,9 @@ enum
 typedef union P2_Collider { 
   P2_ColliderType type;
   struct {
-    P2_ColliderAABB aabb;
-    P2_ColliderCircle circle;
-    P2_ColliderMesh2D mesh2d;
+    P2_AABB aabb;
+    P2_Circle circle;
+    P2_Mesh2D mesh2d;
   };
 } P2_Collider;
 
@@ -84,10 +84,6 @@ struct P2_BodyData {
   P2_Collider collider;
 };
 
-typedef struct P2_CollisionData {
-  Vector2 correction;
-} P2_CollisionData;
-
 /////////////////////////////
 //- Physics2D World Typedefs
 
@@ -106,31 +102,15 @@ typedef struct P2_WorldData {
 } P2_WorldData;
 
 /////////////////////////////
-//- Physics2D Context
-
-typedef struct P2_Ctx {
-  Arena *arena;
-  Arena *bodies_arena;
-  P2_WorldData *worlds;
-  u32 world_count;
-  u32 total_body_count;
-} P2_Ctx;
-
-/////////////////////////////
-//- Physics2D Globals
-
-static P2_Ctx *P2 = null;
-
-/////////////////////////////
 //- Collision Functions
 
 // Collider shape constructors
-static P2_ColliderAABB   P2_AABBFromMesh2D(Mesh2D mesh);
-static P2_ColliderCircle P2_CircleFromMesh2D(Mesh2D mesh);
-static P2_ColliderMesh2D P2_MeshFromMesh2D(Mesh2D mesh);
+static P2_AABB   P2_AABBFromMesh2D(Mesh2D mesh);
+static P2_Circle P2_CircleFromMesh2D(Mesh2D mesh);
+static P2_Mesh2D P2_MeshFromMesh2D(Mesh2D mesh);
 
 // Support functions for GJK
-static Vector2 P2_MeshFindFurthestPoint(P2_ColliderMesh2D mesh, Vector2 direction);
+static Vector2 P2_FindFurthestPointInLocal(P2_Mesh2D mesh2d, Vector2 local_dir);
 
 // Collision queries
 static b32 P2_AABBVsAABB_(P2_BodyId a, P2_BodyId b);
@@ -155,8 +135,8 @@ static b32 P2_MeshVsMesh_(P2_BodyId a, P2_BodyId b);
 //- Core Functions
 
 // World functions
-static P2_WorldId P2_CreateWorld(P2_WorldParams *params);
-static void       P2_DestroyWorld(P2_WorldId world_id);
+static P2_WorldId   P2_CreateWorld(P2_WorldParams *params);
+static void         P2_DestroyWorld(P2_WorldId world_id);
 
 // Body functions
 static P2_BodyId    P2_CreateBody(P2_WorldId world_id, P2_BodyParams *params);
@@ -167,11 +147,4 @@ static f32          P2_GetBodyRotation(P2_BodyId body_id);
 static P2_Collider  P2_GetBodyCollider(P2_BodyId body_id);
 static void         P2_ApplyForce(P2_WorldId world_id, P2_BodyId body_id, Vector2 force);
 
-// Simulation
-static void P2_StepWorld(P2_WorldId world_id, f32 delta);
-
-// Layer Init & Cleanup
-static void P2_Init(void);
-static void P2_Quit(void);
-
-#endif // PHYSICS_H
+#endif // PHYSICS_CORE_H
