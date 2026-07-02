@@ -59,10 +59,7 @@ if not exist build mkdir build
 :: --- Build -----------------------------------------------------------------
 pushd build
 if "1"=="1" (
-  %compile% ../src/test/test_collision.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
-  %compile% ../src/test/test_physics.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
-  %compile% ../src/test/test_custom_renderer.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
+  %compile% ../src/testbed/test_custom_renderer.c %compile_link% gdi32.lib msvcrt.lib raylib.lib winmm.lib user32.lib shell32.lib %out%test_custom_renderer.exe 
   REM call emcc ../src/test/test_custom_renderer.c -o astro.js -w -Os -I../src/astro/ -I../src/third_party/ -L../libs -lraylib.web -std=c99 --preload-file ../assets/ -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sUSE_GLFW=3 -sASYNCIFY -sALLOW_MEMORY_GROWTH=1 -DBUILD_DEBUG -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES3 
-  REM call emcc ../src/test/test_raylib.c -o astro.js -w -Os -I../src/astro/ -I../src/third_party/ -L../libs -lraylib.web -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sUSE_GLFW=3 -sASYNCIFY -sALLOW_MEMORY_GROWTH=1 -std=c99 -DBUILD_DEBUG -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES3
 )
 popd build

@@ -9,10 +9,11 @@
 ////////////////////////////
 //- Third Party Includes
 
-#if !defined(PLATFORM_WEB)
-#include "third_party/raylib/external/glad.h"
+#if defined(PLATFORM_WEB)
+# include <GLES3/gl3.h>
+# include <emscripten/emscripten.h>
 #else
-#include <GLES3/gl3.h>
+# include "third_party/raylib/external/glad.h"
 #endif
 #include "third_party/raylib/raylib.h"
 #include "third_party/raylib/raymath.h"
@@ -24,10 +25,9 @@
 #include "core/core_helpers.h"
 #include "core/core_profiling.h"
 #include "core/core_arena.h"
-#include "core/core_render.h"
-#include "core/core_geometry.h"
-#include "core/core_draw.h"
-#include "physics/physics.h"
+#include "core/core_pool.h"
+#include "core/core_strings.h"
+#include "game/game_objects.h"
 
 ////////////////////////////
 //- Build Configuration
@@ -46,47 +46,8 @@
 //- Layer Configuration
 
 #ifndef GAME_ARENA_SIZE
-#define GAME_ARENA_SIZE KB(4)
+#define GAME_ARENA_SIZE KB(64)
 #endif
-
-////////////////////////////
-//- Emscripten Includes
-
-#if PLATFORM_WEB
-#include <emscripten/emscripten.h>
-#endif
-
-////////////////////////////
-//- Game Typedefs
-
-typedef struct Game {
-  Arena *arena;
-  Arena *vertex_arena;
-  Font default_font;
-  Camera2D camera_2d;
-  f32 camera_zoom;
-  f32 start;
-  f32 elapsed;
-  u32 total_vert_count;
-#if BUILD_DEBUG
-  b32 is_debug_arenas;
-#endif
-} Game;
-
-////////////////////////////
-//- Game Globals
-
-static Game GAME = zero_struct;
-
-////////////////////////////
-//- Game World and Utility Helpers
-
-// helpers
-static void Game_HandleDebugControls(void);
-static void Game_HandleCameraControls(void);
-static void Game_DrawGrid(f32 w, f32 h, f32 cell_size, Color color);
-static void Game_DrawOrigin(Color color);
-static void Game_DebugArena(void);
 
 ////////////////////////////
 //- Application Structure Functions

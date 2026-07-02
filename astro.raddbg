@@ -1,4 +1,4 @@
-// raddbg 0.9.27 project file
+// raddbg 0.9.28 project file
 
 recent_file: path: "src/test/test_ecs.c"
 recent_file: path: "src/astro/game.c"
@@ -11,20 +11,10 @@ target:
   working_directory: "../Astro"
   entry_point: Game_EntryPoint
   arguments: "1200 1200"
-  enabled: 0
-}
-target:
-{
-  executable: "build/test_physics.exe"
-  working_directory: "../Astro"
-  arguments: "1200 1200"
-  entry_point: Game_EntryPoint
-}
-target:
-{
-  executable: "build/test_collision.exe"
-  working_directory: "../Astro"
-  arguments: "1200 1200"
-  entry_point: Game_EntryPoint
   enabled: 1
+}
+watch_pin:
+{
+  expression: "array(mesh_verts, vert_count)"
+  source_location: "src/core/core_geometry.c:176:1"
 }

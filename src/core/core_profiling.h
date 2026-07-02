@@ -23,7 +23,9 @@
 //- Tracy Profiling Macros
 
 #if PROFILE_TRACY
-# define ProfBegin(name) TracyCZoneN(ctx, (name), 1)
+# define ProfBegin() TracyCZoneN(ctx, __func__, 1)
+# define ProfBeginN(name) TracyCZoneN(ctx, name, 1)
+# define ProfBeginNC(name, color) TracyCZoneNC(ctx, name, color, 1)
 # define ProfEnd() TracyCZoneEnd(ctx)
 # define ProfScopeBegin() 
 # define ProfScopeEnd() TracyCFrameMark
@@ -35,7 +37,9 @@
 //- Stub Profiling Macros
 
 #if !defined(ProfBegin)
-# define ProfBegin(name) (void)(0)
+# define ProfBegin() (void)(0)
+# define ProfBeginN(name) (void)(0)
+# define ProfBeginNC(name,color) (void)(0)
 # define ProfEnd() (void)(0)
 # define ProfScopeBegin() (void)(0) 
 # define ProfScopeEnd() (void)(0)
